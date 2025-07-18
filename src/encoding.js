@@ -116,6 +116,19 @@ function readBitPacked(reader, header, bitWidth, output, seen) {
 }
 
 /**
+ * @param {ParquetType} type
+ * @param {number} length
+ * @returns {DecodedArray}
+ */
+export function matchTypeWithArray(type, length) {
+  if (type === 'FLOAT') return new Float32Array(length)
+  else if (type === 'DOUBLE') return new Float64Array(length)
+  else if (type === 'INT32') return new Int32Array(length)
+  else if (type === 'INT64') return new BigInt64Array(length)
+  return new Array(length)
+}
+
+/**
  * @param {DataReader} reader
  * @param {number} count
  * @param {ParquetType} type

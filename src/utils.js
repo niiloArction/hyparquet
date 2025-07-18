@@ -201,10 +201,50 @@ function cacheKey(start, end, size) {
 export function flatten(chunks) {
   if (!chunks) return []
   if (chunks.length === 1) return chunks[0]
+  if (chunks.every(chunk => isTypedArray(chunk))) {
+    const constructor = getConstructorFromTypedArray(chunks[0])
+    const lengthCombined = chunks.reduce((prev, cur) => prev + cur.length, 0)
+    const output = new constructor(lengthCombined)
+    let i = 0
+    for (const chunk of chunks) {
+      output.set(chunk, i)
+      i += chunk.length
+    }
+    return output
+  }
   /** @type {any[]} */
   const output = []
   for (const chunk of chunks) {
     concat(output, chunk)
   }
   return output
+}
+
+/**
+ * @param {DecodedArray} obj
+ * @returns {boolean}
+ */
+export function isTypedArray(obj) {
+  if (!obj) return false
+  if (Array.isArray(obj)) return false
+  return (
+    obj instanceof Int8Array ||
+    obj instanceof Uint8Array ||
+    obj instanceof Uint8ClampedArray ||
+    obj instanceof Int16Array ||
+    obj instanceof Uint16Array ||
+    obj instanceof Int32Array ||
+    obj instanceof Uint32Array ||
+    obj instanceof Float32Array ||
+    obj instanceof Float64Array
+  )
+}
+/**
+ * @param {DecodedArray} arr
+ * @returns {any}
+ */
+export function getConstructorFromTypedArray(arr) {
+  if (arr && Array.isArray(arr)) return Float64Array
+  const constructor = typeof arr === 'object' ? (Object.getPrototypeOf(arr).constructor) : undefined
+  return constructor ?? Float64Array
 }

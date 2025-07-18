@@ -1,5 +1,5 @@
 import { deltaBinaryUnpack, deltaByteArray, deltaLengthByteArray } from './delta.js'
-import { bitWidth, byteStreamSplit, readRleBitPackedHybrid } from './encoding.js'
+import { bitWidth, byteStreamSplit, matchTypeWithArray, readRleBitPackedHybrid } from './encoding.js'
 import { readPlain } from './plain.js'
 import { getMaxDefinitionLevel, getMaxRepetitionLevel } from './schema.js'
 import { snappyUncompress } from './snappy.js'
@@ -35,12 +35,12 @@ export function readDataPage(bytes, daph, { type, element, schemaPath }) {
   ) {
     const bitWidth = type === 'BOOLEAN' ? 1 : view.getUint8(reader.offset++)
     if (bitWidth) {
-      dataPage = new Array(nValues)
       if (type === 'BOOLEAN') {
+        dataPage = new Array(nValues).map(x => !!x) // convert to boolean
         readRleBitPackedHybrid(reader, bitWidth, dataPage)
-        dataPage = dataPage.map(x => !!x) // convert to boolean
       } else {
         // assert(daph.encoding.endsWith('_DICTIONARY'))
+        dataPage = matchTypeWithArray(type, nValues)
         readRleBitPackedHybrid(reader, bitWidth, dataPage, view.byteLength - reader.offset)
       }
     } else {
